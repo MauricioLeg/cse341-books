@@ -1,5 +1,12 @@
 import express from 'express';
 import { getBooksHandler, getBookByIdHandler } from './controllers/books.js';
+import { 
+    getAllAuthors, 
+    getAuthorById, 
+    createAuthor, 
+    updateAuthor, 
+    deleteAuthor 
+} from './controllers/authors.js';
 
 const router = express.Router();
 
@@ -75,5 +82,282 @@ router.get('/books', getBooksHandler);
  *                   example: Internal Server Error
  */
 router.get('/books/:id', getBookByIdHandler);
+
+/**
+ * @openapi
+ * /authors:
+ *   get:
+ *     summary: Get all authors
+ *     tags:
+ *       - Authors
+ *     responses:
+ *       200:
+ *         description: A list of authors
+ *       500:
+ *         description: Unable to retrieve authors
+ */
+router.get('/authors', getAllAuthors);
+
+/**
+ * @openapi
+ * /author/{id}:
+ *   get:
+ *     tags:
+ *       - Authors
+ *     summary: Get an author by ID
+ *     description: Author IDs are custom string IDs, not MongoDB IDs.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Custom ID of the author
+ *         schema:
+ *           type: string
+ *         example: a1
+ *     responses:
+ *       200:
+ *         description: Author found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Author'
+ *             example:
+ *               id: a1
+ *               name: Example Author
+ *               birthYear: 1918
+ *       404:
+ *         description: Author not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Author not found
+ *       500:
+ *         description: Failed to fetch author
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Failed to fetch author
+ */
+router.get('/author/:id', getAuthorById);
+
+/**
+ * @openapi
+ * /author:
+ *   post:
+ *     tags:
+ *       - Authors
+ *     summary: Create an author
+ *     description: Creates an author with a custom string ID.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AuthorInput'
+ *           example:
+ *             id: a1
+ *             name: Example Author
+ *             birthYear: 1918
+ *     responses:
+ *       201:
+ *         description: Author created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 author:
+ *                   $ref: '#/components/schemas/Author'
+ *             example:
+ *               message: Author created successfully.
+ *               author:
+ *                 id: a1
+ *                 name: Example Author
+ *                 birthYear: 1918
+ *       409:
+ *         description: An author with this ID already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Author with this Id already exists.
+ *       500:
+ *         description: Failed to create author
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Failed to create author.
+ */
+router.post('/author', createAuthor);
+
+/**
+ * @openapi
+ * /author/{id}:
+ *   put:
+ *     tags:
+ *       - Authors
+ *     summary: Update an author
+ *     description: Updates the author matching the supplied custom string ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Custom ID of the author to update
+ *         schema:
+ *           type: string
+ *         example: a1
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AuthorInput'
+ *           example:
+ *             id: a1
+ *             name: Updated Author
+ *             birthYear: 1920
+ *     responses:
+ *       200:
+ *         description: Author updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 author:
+ *                   $ref: '#/components/schemas/Author'
+ *             example:
+ *               message: Author updated successfully.
+ *               author:
+ *                 id: a1
+ *                 name: Updated Author
+ *                 birthYear: 1920
+ *       404:
+ *         description: Author not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Author not found.
+ *       500:
+ *         description: Failed to update author
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Failed to update author.
+ */
+router.put('/author/:id', updateAuthor);
+
+/**
+ * @openapi
+ * /author/{id}:
+ *   delete:
+ *     tags:
+ *       - Authors
+ *     summary: Delete an author
+ *     description: Deletes the author matching the supplied custom string ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Custom ID of the author to delete
+ *         schema:
+ *           type: string
+ *         example: a1
+ *     responses:
+ *       200:
+ *         description: Author deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 authors:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Author'
+ *             example:
+ *               message: Author deleted successfully.
+ *               authors: []
+ *       404:
+ *         description: Author not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Author not found.
+ *       500:
+ *         description: Failed to delete author
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Failed to delete author.
+ */
+router.delete('/author/:id', deleteAuthor);
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Author:
+ *       type: object
+ *       required:
+ *         - id
+ *         - name
+ *         - birthYear
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: Custom author ID
+ *           example: a1
+ *         name:
+ *           type: string
+ *           example: Example Author
+ *         birthYear:
+ *           type: integer
+ *           example: 1918
+ *     AuthorInput:
+ *       type: object
+ *       required:
+ *         - id
+ *         - name
+ *         - birthYear
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: Custom author ID
+ *           example: a1
+ *         name:
+ *           type: string
+ *           example: Example Author
+ *         birthYear:
+ *           type: integer
+ *           example: 1918
+ *     Error:
+ *       type: object
+ *       properties:
+ *         error:
+ *           type: string
+ *           example: Author not found
+ */
 
 export default router;
