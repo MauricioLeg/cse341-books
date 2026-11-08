@@ -1,5 +1,11 @@
 import express from 'express';
-import { getBooksHandler, getBookByIdHandler } from './controllers/books.js';
+import {
+    getBooksHandler,
+    getBookByIdHandler,
+    createBookHandler,
+    updateBookHandler,
+    deleteBookHandler
+} from './controllers/books.js';
 import { 
     getAllAuthors, 
     getAuthorById, 
@@ -25,17 +31,20 @@ const router = express.Router();
  *             schema:
  *               type: array
  *               items:
- *                 type: object
+ *                 $ref: '#/components/schemas/Book'
+ *             example:
+ *               - id: b1
+ *                 authorId: a1
+ *                 title: Example Book
+ *                 publicationDate: '2026-01-15'
  *       500:
  *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: Internal Server Error
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Internal Server Error
  */
 router.get('/books', getBooksHandler);
 
@@ -53,35 +62,189 @@ router.get('/books', getBooksHandler);
  *         description: ID of the book to retrieve
  *         schema:
  *           type: string
+ *         example: b1
  *     responses:
  *       200:
  *         description: Book found
  *         content:
  *           application/json:
  *             schema:
- *               type: object
+ *               $ref: '#/components/schemas/Book'
+ *             example:
+ *               id: b1
+ *               authorId: a1
+ *               title: Example Book
+ *               publicationDate: '2026-01-15'
  *       404:
  *         description: Book not found
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: Book not found
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Book not found
  *       500:
  *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: Internal Server Error
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Internal Server Error
  */
 router.get('/books/:id', getBookByIdHandler);
+
+/**
+ * @openapi
+ * /books:
+ *   post:
+ *     tags:
+ *       - Books
+ *     summary: Create a book
+ *     description: Creates a book whose authorId references an existing author's custom ID.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/BookInput'
+ *           example:
+ *             id: b4
+ *             authorId: a1
+ *             title: Example Book Title
+ *             publicationDate: '2026-01-15'
+ *     responses:
+ *       201:
+ *         description: Book created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Book'
+ *             example:
+ *               id: b4
+ *               authorId: a1
+ *               title: Example Book Title
+ *               publicationDate: '2026-01-15'
+ *       400:
+ *         description: Missing or invalid fields, duplicate book ID, or unknown author ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: authorId must match an existing author.
+ *       500:
+ *         description: Unexpected server or database error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Internal Server Error
+ */
+router.post('/books', createBookHandler);
+
+/**
+ * @openapi
+ * /books/{id}:
+ *   put:
+ *     tags:
+ *       - Books
+ *     summary: Update a book
+ *     description: Updates all writable book fields. The custom book ID is provided in the path.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Custom ID of the book to update
+ *         schema:
+ *           type: string
+ *         example: b4
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/BookUpdate'
+ *           example:
+ *             authorId: a2
+ *             title: Updated Book Title
+ *             publicationDate: '2026-02-20'
+ *     responses:
+ *       200:
+ *         description: Book updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Book'
+ *             example:
+ *               id: b4
+ *               authorId: a2
+ *               title: Updated Book Title
+ *               publicationDate: '2026-02-20'
+ *       400:
+ *         description: Missing or invalid fields, or unknown author ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: authorId must match an existing author.
+ *       404:
+ *         description: Book not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Book not found
+ *       500:
+ *         description: Unexpected server or database error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Internal Server Error
+ */
+router.put('/books/:id', updateBookHandler);
+
+/**
+ * @openapi
+ * /books/{id}:
+ *   delete:
+ *     tags:
+ *       - Books
+ *     summary: Delete a book
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Custom ID of the book to delete
+ *         schema:
+ *           type: string
+ *         example: b4
+ *     responses:
+ *       204:
+ *         description: Book deleted; no response body
+ *       404:
+ *         description: Book not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Book not found
+ *       500:
+ *         description: Unexpected server or database error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Internal Server Error
+ */
+router.delete('/books/:id', deleteBookHandler);
 
 /**
  * @openapi
@@ -222,7 +385,6 @@ router.post('/author', createAuthor);
  *           schema:
  *             $ref: '#/components/schemas/AuthorInput'
  *           example:
- *             id: a1
  *             name: Updated Author
  *             birthYear: 1920
  *     responses:
@@ -318,6 +480,64 @@ router.delete('/author/:id', deleteAuthor);
  * @openapi
  * components:
  *   schemas:
+ *     Book:
+ *       type: object
+ *       required:
+ *         - id
+ *         - authorId
+ *         - title
+ *         - publicationDate
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: Custom book ID
+ *           example: b1
+ *         authorId:
+ *           type: string
+ *           description: Custom ID of an existing author
+ *           example: a1
+ *         title:
+ *           type: string
+ *           example: Example Book Title
+ *         publicationDate:
+ *           type: string
+ *           example: '2026-01-15'
+ *     BookInput:
+ *       type: object
+ *       required:
+ *         - id
+ *         - authorId
+ *         - title
+ *         - publicationDate
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: b4
+ *         authorId:
+ *           type: string
+ *           example: a1
+ *         title:
+ *           type: string
+ *           example: Example Book Title
+ *         publicationDate:
+ *           type: string
+ *           example: '2026-01-15'
+ *     BookUpdate:
+ *       type: object
+ *       required:
+ *         - authorId
+ *         - title
+ *         - publicationDate
+ *       properties:
+ *         authorId:
+ *           type: string
+ *           example: a2
+ *         title:
+ *           type: string
+ *           example: Updated Book Title
+ *         publicationDate:
+ *           type: string
+ *           example: '2026-02-20'
  *     Author:
  *       type: object
  *       required:
